@@ -820,6 +820,80 @@ func TestCreateOrUpdateInCluster(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Ensure that argocd image updater kustomize image is preserved from an existing app",
+			appSet: argoprojiov1alpha1.ApplicationSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "name",
+					Namespace: "namespace",
+				},
+				Spec: argoprojiov1alpha1.ApplicationSetSpec{
+					Template: argoprojiov1alpha1.ApplicationSetTemplate{
+						Spec: argov1alpha1.ApplicationSpec{
+							Project: "project",
+						},
+					},
+				},
+			},
+			existingApps: []argov1alpha1.Application{
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Application",
+						APIVersion: "argoproj.io/v1alpha1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "app1",
+						Namespace:       "namespace",
+						ResourceVersion: "2",
+					},
+					Spec: argov1alpha1.ApplicationSpec{
+						Project: "project",
+						Source: argov1alpha1.ApplicationSource{
+							Kustomize: &argov1alpha1.ApplicationSourceKustomize{
+								Images: argov1alpha1.KustomizeImages{
+									"image1:tag",
+									"image2:tag",
+								},
+							},
+						},
+					},
+				},
+			},
+			desiredApps: []argov1alpha1.Application{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "app1",
+					},
+					Spec: argov1alpha1.ApplicationSpec{
+						Project: "project",
+					},
+				},
+			},
+			expected: []argov1alpha1.Application{
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Application",
+						APIVersion: "argoproj.io/v1alpha1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "app1",
+						Namespace:       "namespace",
+						ResourceVersion: "2",
+					},
+					Spec: argov1alpha1.ApplicationSpec{
+						Project: "project",
+						Source: argov1alpha1.ApplicationSource{
+							Kustomize: &argov1alpha1.ApplicationSourceKustomize{
+								Images: argov1alpha1.KustomizeImages{
+									"image1:tag",
+									"image2:tag",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	} {
 
 		t.Run(c.name, func(t *testing.T) {
