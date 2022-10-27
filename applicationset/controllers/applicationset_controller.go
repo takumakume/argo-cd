@@ -525,8 +525,17 @@ func (r *ApplicationSetReconciler) createOrUpdateInCluster(ctx context.Context, 
 		}
 
 		action, err := utils.CreateOrUpdate(ctx, r.Client, found, func() error {
+			currentSpec := found.Spec
+
 			// Copy only the Application/ObjectMeta fields that are significant, from the generatedApp
 			found.Spec = generatedApp.Spec
+
+			if currentSpec.Source.Kustomize != nil && len(currentSpec.Source.Kustomize.Images) > 0 {
+				if found.Spec.Source.Kustomize == nil {
+					found.Spec.Source.Kustomize = &argov1alpha1.ApplicationSourceKustomize{}
+				}
+				found.Spec.Source.Kustomize.Images = currentSpec.Source.Kustomize.Images
+			}
 
 			// Preserve specially treated argo cd annotations:
 			// * https://github.com/argoproj/applicationset/issues/180
